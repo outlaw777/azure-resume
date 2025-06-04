@@ -5,14 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Company.Function;
 
-public class GetResumeCounter
+public class GetResumeCounter(ILogger<GetResumeCounter> logger)
 {
-    private readonly ILogger<GetResumeCounter> _logger;
-
-    public GetResumeCounter(ILogger<GetResumeCounter> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<GetResumeCounter> _logger = logger;
 
     [Function("GetResumeCounter")]
     public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
