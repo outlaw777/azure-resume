@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Company.Function
 {
-    public class GetResumeCounter
+    public class getResumeCounter
     {
         [JsonProperty(PropertyName ="id")]
         public string Id { get; set; }
