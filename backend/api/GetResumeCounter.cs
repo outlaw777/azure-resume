@@ -21,35 +21,37 @@ namespace Company.Function
     {
         private readonly ILogger<GetResumeCounter> _logger;
         private readonly CosmosClient _cosmosClient;
+        private readonly Container _container;
 
         public GetResumeCounter(ILogger<GetResumeCounter> logger, CosmosClient cosmosClient)
         {
             _logger = logger;
             _cosmosClient = cosmosClient;
+            _container = _cosmosClient.GetContainer("AzureResume", "Counter");
         }
 
         [Function("GetResumeCounter")]
-        public CounterEntity Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] Microsoft.AspNetCore.Http.HttpRequest req,
-            [CosmosDB(databaseName: "AzureResume", collectionName: "Counter", ConnectionStringSetting = "AzureResumeConnectionString", Id = "1", PartitionKey = "1")] CounterEntity counter)
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] Microsoft.AspNetCore.Http.HttpRequest req)
         {
             _logger.LogInformation("Processing request for resume counter.");
 
-            // Ensure counter exists
+            // Retrieve existing counter
+            var response = await _container.ReadItemAsync<CounterEntity>("1", new PartitionKey("1"));
+            var counter = response.Resource;
+
             if (counter == null)
             {
-                _logger.LogError("Counter not found.");
-                return null; // Returning null tells Azure Functions output binding that no change is needed
+                return new NotFoundObjectResult("Counter not found.");
             }
 
             // Increment the counter
             counter.Count++;
 
-            return counter; // Automatically updates in CosmosDB via output binding
-        }
+            // Update the item in CosmosDB
+            await _container.ReplaceItemAsync(counter, counter.Id, new PartitionKey(counter.Id));
 
-        private class CosmosDBAttribute : Attribute
-        {
+            return new OkObjectResult(counter);
         }
     }
 }
