@@ -23,7 +23,7 @@ namespace Company.Function
         [Function("GetResumeCounter")]
         public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
-            [CosmosDBInput(databaseName: "AzureResume", containerName: "Counter", Connection = "AzureResumeConnectionString", Id = "1")] Counter counter)
+            [CosmosDBInput(databaseName: "AzureResume", containerName: "Counter", Connection = "AzureResumeConnectionString", Id = "1")] GetResumeCounter counter)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
