@@ -12,8 +12,14 @@ namespace Company.Function
 {
     public static class GetResumeCounter
     {
-        [JsonProperty("id")]
-        public string Id { get; set; } = "1";
+        [FunctionName("GetResumeCounter")]
+        
+        public static async Task<IActionResult>
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [CosmosDB(databaseName:"AzureResume", collectionName: "Counter", ConnectionStringSetting = "AzureResumeConnectionString", Id = "1")] Counter counter,
+
+            ILogger log)
+        
 
         [JsonProperty("count")]
         public int Count { get; set; }
