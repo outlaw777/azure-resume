@@ -1,14 +1,16 @@
-using System.Net;
+using System;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
-using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace Company.Function
 {
-    public class CounterEntity
+    public static class GetResumeCounter
     {
         [JsonProperty("id")]
         public string Id { get; set; } = "1";
