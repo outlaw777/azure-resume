@@ -1,40 +1,51 @@
 using System;
 using System.IO;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Company.Function
 {
-    public static class GetResumeCounter
+    public class GetResumeCounter
     {
-        [FunctionName("GetResumeCounter")]
-        
-        public static async Task<IActionResult>
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-            [CosmosDB(databaseName:"AzureResume", collectionName: "Counter", ConnectionStringSetting = "AzureResumeConnectionString", Id = "1")] Counter counter,
+        private readonly ILogger<GetResumeCounter> _logger;
 
-            ILogger log)
+        public GetResumeCounter(ILogger<GetResumeCounter> logger)
         {
-             log.LogInformation("C# HTTP trigger function processed a request.");
+            _logger = logger;
+        }
+
+        [Function("GetResumeCounter")]
+        public async Task<HttpResponseData> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
+            [CosmosDBInput(databaseName: "AzureResume", containerName: "Counter", Connection = "AzureResumeConnectionString", Id = "1")] Counter counter)
+        {
+            _logger.LogInformation("C# HTTP trigger function processed a request.");
 
             string name = req.Query["name"];
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            using var reader = new StreamReader(req.Body);
+            string requestBody = await reader.ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             name = name ?? data?.name;
 
             string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+                ? "This function executed successfully. Provide a name for a personalized response."
+                : $"Hello, {name}. This function executed successfully.";
 
-            return new OKObjectResult(responseMessage);
-        }  
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json");
+            await response.WriteStringAsync(responseMessage);
+
+            return response;
+        }
     }
+}
 
     
 
