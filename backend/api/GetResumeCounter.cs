@@ -19,50 +19,24 @@ namespace Company.Function
             [CosmosDB(databaseName:"AzureResume", collectionName: "Counter", ConnectionStringSetting = "AzureResumeConnectionString", Id = "1")] Counter counter,
 
             ILogger log)
-        
+        {
+             log.LogInformation("C# HTTP trigger function processed a request.");
 
-        [JsonProperty("count")]
-        public int Count { get; set; }
+            string name = req.Query["name"];
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            name = name ?? data?.name;
+
+            string responseMessage = string.IsNullOrEmpty(name)
+                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
+                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+
+            return new OKObjectResult(responseMessage);
+        }  
     }
 
-    public class GetResumeCounter
-    {
-        private readonly ILogger<GetResumeCounter> _logger;
-        private readonly CosmosClient _cosmosClient;
-        private readonly Container _container;
-
-        public GetResumeCounter(ILogger<GetResumeCounter> logger, CosmosClient cosmosClient)
-        {
-            _logger = logger;
-            _cosmosClient = cosmosClient;
-            _container = _cosmosClient.GetContainer("AzureResume", "Counter");
-        }
-
-        [Function("GetResumeCounter")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] Microsoft.AspNetCore.Http.HttpRequest req)
-        {
-            _logger.LogInformation("Processing request for resume counter.");
-
-            // Retrieve existing counter
-            var response = await _container.ReadItemAsync<CounterEntity>("1", new PartitionKey("1"));
-            var counter = response.Resource;
-
-            if (counter == null)
-            {
-                return new NotFoundObjectResult("Counter not found.");
-            }
-
-            // Increment the counter
-            counter.Count++;
-
-            // Update the item in CosmosDB
-            await _container.ReplaceItemAsync(counter, counter.Id, new PartitionKey(counter.Id));
-
-            return new OkObjectResult(counter);
-        }
-    }
-}
+    
 
 
 
